@@ -10,10 +10,15 @@ WORKDIR /go/src/github.com/AthennaMind/opnsense-exporter
 COPY . .
 
 RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 \
-    go build \
-    -tags osusergo,netgo \
-    -ldflags "-s -w -X main.version=${Version}" \
-    -o /usr/bin/opnsense-exporter .
+	go build \
+	-tags osusergo,netgo \
+	-ldflags "-s -w -X main.version=${Version}" \
+	-o /usr/bin/opnsense-exporter .
+
+RUN sed -i 's/^Suites: bookworm bookworm-updates$/Suites: bookworm bookworm-updates bookworm-backports/' /etc/apt/sources.list.d/debian.sources \
+	apt-get update \
+	apt-get install upx-ucl
+RUN upx -5 /usr/bin/opnsense-exporter
 
 FROM --platform=${BUILDPLATFORM:-linux/amd64} gcr.io/distroless/static-debian12:latest
 
